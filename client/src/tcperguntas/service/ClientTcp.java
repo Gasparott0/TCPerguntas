@@ -8,78 +8,103 @@ import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
 
-import tcperguntas.bean.FileMessage;
-import tcperguntas.model.Player;
+import tcperguntas.bean.Player;
+import tcperguntas.bean.Quiz;
+import tcperguntas.bean.Ranking;
 import tcperguntas.model.Question;
 
 public class ClientTcp {
 
 	private Socket socket;
-	private FileMessage messageReceived = null;
+
+	private ObjectInputStream inputStream;
 	private ObjectOutputStream outputStream;
 
-	public ClientTcp() {
+	private Quiz quizReceived = null;
+	private boolean played = false;
+
+	public ClientTcp() throws IOException {
+
 		try {
+
 			String ip = JOptionPane.showInputDialog("Digite o endereço ip:");
 			Integer port = Integer.parseInt(JOptionPane.showInputDialog("Digite a porta:"));
+			
 			this.socket = new Socket(ip, port);
+			this.inputStream = new ObjectInputStream(socket.getInputStream());
 			this.outputStream = new ObjectOutputStream(socket.getOutputStream());
 
-			new Thread(new ListenerSocket(socket)).start();
-
-//			menu();
+			if ((quizReceived = (Quiz) inputStream.readObject()) != null) {
+				menu();
+			}
 
 		} catch (UnknownHostException e) {
-			System.out.println("Erro no construtor clienttcp primeiro catch " + e);
-		} catch (IOException e) {
-			System.out.println("Erro no construtor clienttcp segundo catch " + e);
+			System.out.println(e);
+		} catch (ClassNotFoundException e) {
+			System.out.println(e);
 		}
 	}
 
-	private void menu() throws IOException {
+	private void menu() throws IOException, ClassNotFoundException {
 		String nickcname = JOptionPane.showInputDialog("Digite seu nickcname:");
-		Player player = new Player(nickcname, 0);
 
 		while (true) {
 			String opt = JOptionPane.showInputDialog("1 - Jogar" + "\n2 - Ver pontuação" + "\n3 - Sair");
 
 			switch (opt) {
 			case "1":
-				Question[] teste = messageReceived.getQuestions();
+				Question[] questions = this.quizReceived.getQuestions();
+				String[] answers = new String[10];
 
-				for (int i = 0; i <= 9; i++) {
-					JOptionPane.showMessageDialog(null, "Pergunta: " + teste[i].getAnswer());
+				for (int i = 0; i <= 9; i++)
+					answers[i] = JOptionPane.showInputDialog("Pergunta: " + questions[i].getQuestion());
+
+				Integer score = calcScore(answers, questions);
+				JOptionPane.showMessageDialog(null, "Sua pontuação foi: " + score);
+
+				Player player = new Player(nickcname, score);
+
+				this.outputStream.flush();
+				this.outputStream.writeObject(player);
+
+				this.played = true;
+
+				break;
+
+			case "2":
+
+				if (this.played) {
+					this.outputStream.writeObject(new Ranking());
+					this.outputStream.flush();
+
+					Ranking ranking;
+
+					ranking = (Ranking) this.inputStream.readObject();
+					JOptionPane.showMessageDialog(null, ranking);
+
+				} else {
+					JOptionPane.showMessageDialog(null, "Jogue uma partida antes");
 				}
 				break;
+
 			case "3":
 				System.exit(0);
 				break;
+
+			default:
+				JOptionPane.showMessageDialog(null, "Digite uma opção válida");
+				break;
 			}
 		}
 
 	}
 
-	private class ListenerSocket implements Runnable {
-
-		private ObjectInputStream inputStream;
-
-		public ListenerSocket(Socket socket) throws IOException {
-			this.inputStream = new ObjectInputStream(socket.getInputStream());
-
-		}
-
-		@Override
-		public void run() {
-
-			try {
-				if ((messageReceived = (FileMessage) inputStream.readObject()) != null) {
-					menu();
-				}
-			} catch (IOException e) {
-				System.out.println(e);
-			} catch (ClassNotFoundException e) {
-				System.out.println(e);
-			}
-		}
+	private Integer calcScore(String[] answers, Question[] questions) {
+		Integer score = 0;
+		for (int i = 0; i <= 9; i++)
+			if (answers[i].equals(questions[i].getAnswer()))
+				score++;
+		return score;
 	}
+
 }

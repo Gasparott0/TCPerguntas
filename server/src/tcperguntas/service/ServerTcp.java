@@ -5,24 +5,23 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-import tcperguntas.bean.FileMessage;
-import tcperguntas.model.Player;
+import tcperguntas.bean.Player;
+import tcperguntas.bean.Quiz;
+import tcperguntas.bean.Ranking;
 import tcperguntas.model.Question;
 
-@SuppressWarnings("unused")
 public class ServerTcp {
 
 	private ServerSocket serverSocket;
 	private Socket socket;
-	private Map<Player, ObjectOutputStream> streamMap = new HashMap<Player, ObjectOutputStream>();
+	private List<Player> players = new ArrayList<Player>();
 
-	public ServerTcp(Question questions[]) throws IOException {
+	public ServerTcp(Question questions[]) {
 
 		try {
-
 			serverSocket = new ServerSocket(12000);
 
 			while (true) {
@@ -30,11 +29,8 @@ public class ServerTcp {
 
 				new Thread(new ListenerSocket(socket, questions)).start();
 			}
-
-		} catch (Exception e) {
-			System.out.println("Erro no construtor servertcp " + e);
-		} finally {
-			serverSocket.close();
+		} catch (IOException e) {
+			System.out.println(e);
 		}
 
 	}
@@ -54,29 +50,29 @@ public class ServerTcp {
 		@Override
 		public void run() {
 
-			FileMessage message = new FileMessage(null, questions);
+			Quiz quiz = new Quiz(questions);
 
 			try {
 				this.outputStream.flush();
-				this.outputStream.writeObject(message);
-				this.outputStream.flush();
-				this.outputStream.close();
+				this.outputStream.writeObject(quiz);
+				while (true) {
+					Player player;
+					Object obj = this.inputStream.readObject();
+					
+					if(obj instanceof Player) {
+						player = (Player) obj;
+						players.add(player);
+					}
+					if (obj instanceof Ranking) {
+						this.outputStream.flush();
+						this.outputStream.writeObject(new Ranking(players));
+					}
+				}
 			} catch (IOException e) {
-				System.out.println("Erro envio do message para o cliente " + e);
+				System.out.println(e);
+			} catch (ClassNotFoundException e) {
+				System.out.println(e);
 			}
-
-//			try {
-//				while ((message = (FileMessage) inputStream.readObject()) != null) {
-//					streamMap.put(message.getPlayer(), outputStream);
-//
-//				}
-//			} catch (IOException e) {
-//				streamMap.remove(message.getPlayer());
-//				System.out.println("Erro conexão com cliente primeiro catch " + e);
-//			} catch (ClassNotFoundException e) {
-//				e.printStackTrace();
-//				System.out.println("Erro conexão com cliente segundo catch " + e);
-//			}
 
 		}
 	}
