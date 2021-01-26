@@ -29,7 +29,7 @@ public class Ranking implements Serializable {
 			if (player.getScore() == 10)
 				str.append("Pontuação: " + player.getScore() + " Nick: " + player.getNickcname() + "\n");
 			else
-				str.append("Pontuação: " + player.getScore() + "  Nick: " + player.getNickcname() + "\n");
+				str.append("Pontuação: " + player.getScore() + "   Nick: " + player.getNickcname() + "\n");
 		}
 
 		return str.toString();

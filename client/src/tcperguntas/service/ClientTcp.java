@@ -57,7 +57,7 @@ public class ClientTcp {
 				String[] answers = new String[10];
 
 				for (int i = 0; i <= 9; i++)
-					answers[i] = JOptionPane.showInputDialog("Pergunta: " + questions[i].getQuestion());
+					answers[i] = JOptionPane.showInputDialog("Pergunta: " + questions[i].getQuestion()).toLowerCase();
 
 				Integer score = calcScore(answers, questions);
 				JOptionPane.showMessageDialog(null, "Sua pontuação foi: " + score);

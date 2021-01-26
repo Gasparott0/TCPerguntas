@@ -15,7 +15,7 @@ public class Application {
 
 		for (int i = 0; i <= 9; i++) {
 			String question = JOptionPane.showInputDialog("Digite a " + (i + 1) + "º pergunta:");
-			String answer = JOptionPane.showInputDialog("Digite a resposta da " + (i + 1) + "º pergunta");
+			String answer = JOptionPane.showInputDialog("Digite a resposta da " + (i + 1) + "º pergunta").toLowerCase();
 
 			questions[i] = new Question(question, answer);
 		}
