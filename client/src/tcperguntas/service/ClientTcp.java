@@ -64,8 +64,8 @@ public class ClientTcp {
 
 				Player player = new Player(nickcname, score);
 
-				this.outputStream.flush();
 				this.outputStream.writeObject(player);
+				this.outputStream.flush();
 
 				this.played = true;
 
@@ -77,7 +77,7 @@ public class ClientTcp {
 					this.outputStream.writeObject(new Ranking());
 					this.outputStream.flush();
 
-					Ranking ranking;
+					Ranking ranking = null;
 
 					ranking = (Ranking) this.inputStream.readObject();
 					JOptionPane.showMessageDialog(null, ranking);

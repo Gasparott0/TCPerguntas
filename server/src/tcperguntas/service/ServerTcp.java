@@ -19,7 +19,7 @@ public class ServerTcp {
 	private Socket socket;
 	private List<Player> players = new ArrayList<Player>();
 
-	public ServerTcp(Question questions[]) {
+	public ServerTcp(Question[] questions) {
 
 		try {
 			serverSocket = new ServerSocket(12000);
@@ -39,9 +39,9 @@ public class ServerTcp {
 
 		private ObjectOutputStream outputStream;
 		private ObjectInputStream inputStream;
-		private Question questions[];
+		private Question[] questions;
 
-		public ListenerSocket(Socket socket, Question questions[]) throws IOException {
+		public ListenerSocket(Socket socket, Question[] questions) throws IOException {
 			this.outputStream = new ObjectOutputStream(socket.getOutputStream());
 			this.inputStream = new ObjectInputStream(socket.getInputStream());
 			this.questions = questions;
@@ -53,8 +53,8 @@ public class ServerTcp {
 			Quiz quiz = new Quiz(questions);
 
 			try {
-				this.outputStream.flush();
 				this.outputStream.writeObject(quiz);
+				this.outputStream.flush();
 				while (true) {
 					Player player;
 					Object obj = this.inputStream.readObject();
@@ -64,8 +64,9 @@ public class ServerTcp {
 						players.add(player);
 					}
 					if (obj instanceof Ranking) {
+						Ranking ranking = new Ranking(players);
+						this.outputStream.writeObject(ranking);
 						this.outputStream.flush();
-						this.outputStream.writeObject(new Ranking(players));
 					}
 				}
 			} catch (IOException e) {
